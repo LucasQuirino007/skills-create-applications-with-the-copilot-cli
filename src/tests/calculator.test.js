@@ -1,6 +1,9 @@
 "use strict";
 
 const {
+  modulo,
+  power,
+  squareRoot,
   SUPPORTED_OPERATIONS,
   printUsage,
   parseNumber,
@@ -9,13 +12,42 @@ const {
 } = require("../calculator");
 
 describe("SUPPORTED_OPERATIONS", () => {
-  test("contains only the four basic operations", () => {
+  test("contains all supported operations", () => {
     expect(Object.keys(SUPPORTED_OPERATIONS).sort()).toEqual([
       "addition",
       "division",
+      "modulo",
       "multiplication",
+      "power",
+      "squareRoot",
       "subtraction",
     ]);
+  });
+});
+
+describe("new operation helpers", () => {
+  test("runs extended image example for modulo (5 % 2)", () => {
+    expect(modulo(5, 2)).toBe(1);
+  });
+
+  test("modulo throws for division by zero", () => {
+    expect(() => modulo(10, 0)).toThrow("Modulo by zero is not allowed.");
+  });
+
+  test("runs extended image example for power (2 ^ 3)", () => {
+    expect(power(2, 3)).toBe(8);
+  });
+
+  test("runs extended image example for square root (sqrt 16)", () => {
+    expect(squareRoot(16)).toBe(4);
+  });
+
+  test("squareRoot throws for negative numbers", () => {
+    expect(() => squareRoot(-1)).toThrow("Square root of a negative number is not allowed.");
+  });
+
+  test("squareRoot handles zero", () => {
+    expect(squareRoot(0)).toBe(0);
   });
 });
 
@@ -58,12 +90,32 @@ describe("calculate", () => {
     expect(calculate("multiplication", 2.5, 4)).toBe(10);
   });
 
+  test("runs extended image modulo operation (5 % 2)", () => {
+    expect(calculate("modulo", 5, 2)).toBe(1);
+  });
+
+  test("runs extended image power operation (2 ^ 3)", () => {
+    expect(calculate("power", 2, 3)).toBe(8);
+  });
+
+  test("runs extended image square root operation (sqrt 16)", () => {
+    expect(calculate("squareRoot", 16)).toBe(4);
+  });
+
   test("throws for division by zero", () => {
     expect(() => calculate("division", 10, 0)).toThrow("Division by zero is not allowed.");
   });
 
+  test("throws for modulo by zero", () => {
+    expect(() => calculate("modulo", 10, 0)).toThrow("Modulo by zero is not allowed.");
+  });
+
+  test("throws for negative square root", () => {
+    expect(() => calculate("squareRoot", -9)).toThrow("Square root of a negative number is not allowed.");
+  });
+
   test("throws for unsupported operation", () => {
-    expect(() => calculate("modulo", 10, 2)).toThrow('Unsupported operation: "modulo".');
+    expect(() => calculate("unknown", 10, 2)).toThrow('Unsupported operation: "unknown".');
   });
 });
 
@@ -88,9 +140,9 @@ describe("CLI helpers", () => {
 
   test("printUsage prints usage and supported operations", () => {
     printUsage();
-    expect(logSpy).toHaveBeenCalledWith("Usage: node src\\calculator.js <operation> <firstNumber> <secondNumber>");
+    expect(logSpy).toHaveBeenCalledWith("Usage: node src\\calculator.js <operation> <firstNumber> [secondNumber]");
     expect(logSpy).toHaveBeenCalledWith(
-      "Supported operations: addition, subtraction, multiplication, division",
+      "Supported operations: addition, subtraction, multiplication, division, modulo, power, squareRoot",
     );
   });
 
@@ -108,7 +160,7 @@ describe("CLI helpers", () => {
     main();
 
     expect(process.exitCode).toBe(1);
-    expect(logSpy).toHaveBeenCalledWith("Usage: node src\\calculator.js <operation> <firstNumber> <secondNumber>");
+    expect(logSpy).toHaveBeenCalledWith("Usage: node src\\calculator.js <operation> <firstNumber> [secondNumber]");
   });
 
   test("main fails for invalid numbers", () => {
@@ -124,6 +176,23 @@ describe("CLI helpers", () => {
     main();
 
     expect(errorSpy).toHaveBeenCalledWith("Division by zero is not allowed.");
+    expect(process.exitCode).toBe(1);
+  });
+
+  test("main supports squareRoot with a single argument", () => {
+    process.argv = ["node", "src\\calculator.js", "squareRoot", "49"];
+    main();
+
+    expect(logSpy).toHaveBeenCalledWith(7);
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(process.exitCode).toBeUndefined();
+  });
+
+  test("main fails for negative squareRoot input", () => {
+    process.argv = ["node", "src\\calculator.js", "squareRoot", "-9"];
+    main();
+
+    expect(errorSpy).toHaveBeenCalledWith("Square root of a negative number is not allowed.");
     expect(process.exitCode).toBe(1);
   });
 });
